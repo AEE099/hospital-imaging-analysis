@@ -1,0 +1,459 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+
+df = pd.read_csv("DA-INCART-IMAGENES-JUN2015-JUN2023.csv", encoding='latin1')
+
+print("Datos dataframe: \n" , df.head())
+print ("Dataframe info : \n", df.info())
+print ("Dataframe descrive's statistics : \n", df.describe())
+print ("Missing values: \n" , df.isnull().sum())
+print ("Duplicated values: \n", df.duplicated().sum())
+
+df.info()
+df.head()
+
+df.hist(bins=50, figsize=(20, 15))
+#cambiar nombres de columnas
+df.rename(columns={'A¤o': 'Ano'}, inplace=True)
+df.rename(columns={"Servicio en 67A" : "Tipo de Servicio"}, inplace=True)
+df.rename (columns={"Sin dato" : "Sin datos del seguro"} , inplace=True)
+df.rename(columns={"Sin dato.1" : "Sin datos de la nacionalidad"} , inplace=True)
+df.rename(columns={"Otros.1" : "Otra nacionalidad"} , inplace=True)
+
+
+#Corregir spelling y palabras incorrectas
+from dataclasses import replace
+df ["Tipo de Servicio"] = df["Tipo de Servicio"].str.replace ("¡" ,  "í", regex=False)
+df ["Tipo de Servicio"] = df["Tipo de Servicio"].str.replace ("Endoscopías G\xa0strica" ,  "Endoscopías Gastrica", regex=False)
+df ["Tipo de Servicio"] = df["Tipo de Servicio"].str.replace ("Resonancia Magn\x82tica" ,  "Resonancia Magnetica", regex=False)
+
+print("Renamed columns: \n", df.columns)
+df['Ano'].unique()
+# Filter the DataFrame for rows where the 'Ano'
+filtered_df = df[df["Ano"] == 2023
+                 ]
+
+# Display the filtered DataFrame
+print(filtered_df)
+
+#For some reason there was a missing value in the histgram for a year between 2015-2019 , but I did not find anything. I filtered all the possibles years
+#Nothing was found. I will keep the data as it is.
+df.info()
+df.describe()
+df.drop(["Sin datos del seguro"], axis=1, inplace=True)
+
+# Drop the columnd "Sin datos del seguro" there was not data in this column.
+numeric_df = df.select_dtypes(include=[np.number])
+matrix = numeric_df.corr()
+
+# Plot the heatmap
+sns.heatmap(matrix, cmap="coolwarm", annot=True, fmt=".2f", cbar=True)
+plt.show()
+# Calculate the total counts for Masculino and Femenino
+sexos = df[['Masculino', 'Femenino']].sum()
+
+# Map the labels for the pie chart
+mapa = ['Masculino', 'Femenino']
+
+# Plot the pie chart
+plt.pie(sexos, labels=mapa, autopct='%1.1f%%', startangle=90)
+plt.title('Distribucion por Sexo')
+plt.show()
+# Agrupar los datos por Mes y Sexo, y sumar las cantidades
+sexo_mes = df.groupby('Mes')[['Masculino', 'Femenino']].sum().reset_index()
+
+# Crear el gráfico de líneas
+plt.figure(figsize=(12, 6))
+
+# Gráfico para Masculino
+plt.plot(sexo_mes['Mes'], sexo_mes['Masculino'], label='Masculino', marker='o', color='blue')
+
+# Gráfico para Femenino
+plt.plot(sexo_mes['Mes'], sexo_mes['Femenino'], label='Femenino', marker='o', color='pink')
+
+# Configurar etiquetas y título
+plt.title('Distribución de Sexo por Mes')
+plt.xlabel('Mes')
+plt.ylabel('Cantidad')
+plt.xticks(range(1, 13))  # Asegurar que los meses estén en el rango 1-12
+plt.legend(title='Sexo')
+plt.grid(True)
+plt.tight_layout()
+
+# Mostrar la gráfica
+plt.show()
+
+# Crear un gráfico de líneas para la distribución de sexo por año
+plt.figure(figsize=(12, 6))
+
+# Agrupar los datos por 'Ano' y sumar las columnas 'Masculino' y 'Femenino'
+sexo_por_ano = df.groupby('Ano')[['Masculino', 'Femenino']].sum().reset_index()
+
+# Gráfico para Masculino
+plt.plot(sexo_por_ano['Ano'], sexo_por_ano['Masculino'], label='Masculino', marker='o', color='blue')
+
+# Gráfico para Femenino
+plt.plot(sexo_por_ano['Ano'], sexo_por_ano['Femenino'], label='Femenino', marker='o', color='pink')
+
+# Configurar etiquetas y título
+plt.title('Distribución de Sexo por Año')
+plt.xlabel('Año')
+plt.ylabel('Cantidad')
+plt.legend(title='Sexo')
+plt.grid(True)
+plt.tight_layout()
+
+# Mostrar la gráfica
+plt.show()
+# Calculate the total counts for RD, Haiti, Otra nacionalidad, and Sin datos de la nacionalidad
+nacionalidad = df[['RD', 'Haiti', "Otra nacionalidad", "Sin datos de la nacionalidad"]].sum()
+
+# Map the labels for the bar chart
+mapa = ['RD', 'Haiti', "Otra nacionalidad", "Sin datos"]
+
+plt.bar(mapa, nacionalidad)
+plt.title('Distribucion por nacionalidad')
+plt.xlabel('Nacionalidad')
+plt.ylabel('Cantidad')
+colors = ['blue', 'green', 'orange', 'red']
+bars = plt.bar(mapa, nacionalidad, color=colors)
+plt.title('Distribucion por nacionalidad')
+plt.xlabel('Nacionalidad')
+plt.ylabel('Cantidad')
+
+
+plt.show()
+# Calculate the total counts
+seguro = df[['Senasa', "Otros"]].sum()
+
+# Map the labels for the bar chart
+mapa = ['Senasa', "Otros"]
+
+# Plot the pie chart
+plt.pie(seguro, labels=mapa, autopct='%1.1f%%', startangle=90)
+plt.title('Distribucion por seguro')
+plt.show()
+# Agrupar por tipo de servicio y sumar las cantidades
+tipo_estudios = df.groupby('Tipo de Servicio')['Cantidad'].sum().reset_index()
+tipo_estudios = tipo_estudios.sort_values(by='Cantidad', ascending=False).head(20)
+
+
+# Crear el gráfico de barras
+plt.figure(figsize=(10, 6))
+plt.bar(tipo_estudios['Tipo de Servicio'], tipo_estudios['Cantidad'], color='skyblue')
+plt.title('Cantidad de estudios por tipo de servicio')
+plt.xlabel('Tipo de Servicio')
+plt.ylabel('Cantidad')
+plt.xticks(rotation=45, ha='right')
+plt.tight_layout()
+plt.show()
+# Agrupar por tipo de servicio y sumar las cantidades
+nombre_estudios = df.groupby('Nombre Servicio')['Cantidad'].sum().reset_index()
+
+# Ordenar por la cantidad en orden descendente y seleccionar el top 20
+top_estudios = nombre_estudios.sort_values(by='Cantidad', ascending=False).head(20)
+
+# Crear el gráfico de barras
+plt.figure(figsize=(12, 6))
+plt.bar(top_estudios['Nombre Servicio'], top_estudios['Cantidad'], color='skyblue')
+plt.title('Top 20 estudios por Nombre Servicio')
+plt.xlabel('Nombre Servicio')
+plt.ylabel('Cantidad')
+plt.xticks(rotation=45, ha='right')
+plt.tight_layout()
+plt.show()
+# Define a color palette for the 'Tipo de Servicio' categories
+palette = sns.color_palette("tab20", len(df['Tipo de Servicio'].unique()))
+
+plt.figure(figsize=(12, 6))
+sns.scatterplot(data=df, x='Masculino', y='Femenino', hue='Tipo de Servicio', alpha=0.9, s=100, palette=palette)
+plt.title('Scatter plot Masculino vs Femenino por Tipo de Servicio')
+plt.legend(title='Tipo de Servicio', bbox_to_anchor=(1.05, 1), loc='upper left') 
+plt.tight_layout()
+plt.show()
+
+# Group the data by 'Tipo de Servicio' and sum the relevant columns
+tipo_servicio_vs_nacionalidad = df.groupby('Tipo de Servicio')[['RD', 'Haiti', 'Otra nacionalidad', 'Sin datos de la nacionalidad']].sum().reset_index()
+
+# Create the scatter plot
+plt.figure(figsize=(12, 6))
+plt.scatter(tipo_servicio_vs_nacionalidad['Tipo de Servicio'], tipo_servicio_vs_nacionalidad['RD'], label='RD', color='blue', alpha=0.6)
+plt.scatter(tipo_servicio_vs_nacionalidad['Tipo de Servicio'], tipo_servicio_vs_nacionalidad['Haiti'], label='Haiti', color='green', alpha=0.6)
+plt.scatter(tipo_servicio_vs_nacionalidad['Tipo de Servicio'], tipo_servicio_vs_nacionalidad['Otra nacionalidad'], label='Otra nacionalidad', color='orange', alpha=0.6)
+plt.scatter(tipo_servicio_vs_nacionalidad['Tipo de Servicio'], tipo_servicio_vs_nacionalidad['Sin datos de la nacionalidad'], label='Sin datos', color='red', alpha=0.6)
+
+# Add labels, title, and legend
+plt.title('Distribución por Nacionalidad y Tipo de Servicio')
+plt.xlabel('Tipo de Servicio')
+plt.ylabel('Cantidad')
+plt.xticks(rotation=45, ha='right')
+plt.legend(title='Nacionalidad')
+plt.tight_layout()
+plt.show()
+# Group the data by 'Tipo de Servicio' and sum the relevant columns
+tipo_servicio_vs_nacionalidad = df.groupby('Tipo de Servicio')[['RD', 'Haiti', 'Otra nacionalidad', 'Sin datos de la nacionalidad']].sum().reset_index()
+
+# Create the scatter plot
+plt.figure(figsize=(12, 6))
+#plt.scatter(tipo_servicio_vs_nacionalidad['Tipo de Servicio'], tipo_servicio_vs_nacionalidad['RD'], label='RD', color='blue', alpha=0.6)
+plt.scatter(tipo_servicio_vs_nacionalidad['Tipo de Servicio'], tipo_servicio_vs_nacionalidad['Haiti'], label='Haiti', color='green', alpha=0.6)
+plt.scatter(tipo_servicio_vs_nacionalidad['Tipo de Servicio'], tipo_servicio_vs_nacionalidad['Otra nacionalidad'], label='Otra nacionalidad', color='orange', alpha=0.6)
+plt.scatter(tipo_servicio_vs_nacionalidad['Tipo de Servicio'], tipo_servicio_vs_nacionalidad['Sin datos de la nacionalidad'], label='Sin datos nacionalidad', color='red', alpha=0.6)
+
+# Add labels, title, and legend
+plt.title('Distribución por Nacionalidad y Tipo de Servicio')
+plt.xlabel('Tipo de Servicio')
+plt.ylabel('Cantidad')
+plt.xticks(rotation=45, ha='right')
+plt.legend(title='Nacionalidad')
+plt.tight_layout()
+plt.show()
+# Filter the top 20 Nombre Servicio
+top_20_servicios = df[df['Nombre Servicio'].isin(top_estudios['Nombre Servicio'])]
+
+# Define a color palette for the top 20 Nombre Servicio
+palette = sns.color_palette("tab20", len(top_20_servicios['Nombre Servicio'].unique()))
+
+# Create the scatterplot
+plt.figure(figsize=(12, 6))
+sns.scatterplot(data=top_20_servicios, x='Masculino', y='Femenino', hue='Nombre Servicio', alpha=0.9, s=100, palette=palette)
+plt.title('Scatter plot Masculino vs Femenino por Nombre de Servicio (Top 20)')
+plt.legend(title='Nombre Servicio', bbox_to_anchor=(1.05, 1), loc='upper left')
+plt.tight_layout()
+plt.show()
+
+# Agrupar por año y sumar las cantidades
+tendencia_anual = df.groupby('Ano')['Cantidad'].sum().reset_index()
+
+# Agrupar por mes y sumar las cantidades
+tendencia_mensual = df.groupby('Mes')['Cantidad'].sum().reset_index()
+
+# Crear gráficos de líneas
+plt.figure(figsize=(14, 6))
+
+# Gráfico de tendencias anuales
+plt.subplot(1, 2, 1)
+plt.plot(tendencia_anual['Ano'], tendencia_anual['Cantidad'], marker='o', color='blue')
+plt.title('Tendencia Anual')
+plt.xlabel('Año')
+plt.ylabel('Cantidad')
+plt.grid(True)
+
+# Gráfico de tendencias mensuales
+plt.subplot(1, 2, 2)
+plt.plot(tendencia_mensual['Mes'], tendencia_mensual['Cantidad'], marker='o', color='green')
+plt.title('Tendencia Mensual')
+plt.xlabel('Mes')
+plt.ylabel('Cantidad')
+plt.xticks(range(1, 13)) 
+plt.grid(True)
+
+plt.tight_layout()
+plt.show()
+# Crear un gráfico de líneas para la evolución de servicios por mes
+plt.figure(figsize=(20, 6))
+
+# Gráfico de tendencias anuales
+plt.subplot(1, 2, 1)
+# Agrupar por año y tipo de servicio, y sumar las cantidades
+tendencia_mensual = df.groupby(['Mes', 'Tipo de Servicio'])['Cantidad'].sum().unstack()
+
+# Crear el gráfico de líneas para cada tipo de servicio
+colors = ['blue',  'orange',"grey", 'purple', 'brown', 'pink', 'cyan', 'magenta', 'black', 'teal', 'gold', 'navy', 'coral', 'salmon', 'khaki', 'plum', 'lavender', 'lightblue']
+for i, column in enumerate(tendencia_mensual.columns):
+    plt.plot(tendencia_mensual.index, tendencia_mensual[column], marker='o', label=column, color=colors[i % len(colors)])
+plt.title('Evolución de Servicios por mes y Tipo de Servicio')
+plt.xlabel('mes')
+plt.ylabel('Cantidad de Servicios')
+plt.legend(title='Tipo de Servicio', bbox_to_anchor=(1.05, 1), loc='upper left')
+plt.grid(True)
+plt.tight_layout()
+
+plt.tight_layout()
+plt.show()
+# Crear un gráfico de líneas para la evolución de servicios por año
+plt.figure(figsize=(25, 10))
+
+# Gráfico de tendencias anuales
+plt.subplot(1, 2, 1)
+# Agrupar por año y tipo de servicio, y sumar las cantidades
+tendencia_ano_servicio = df.groupby(['Ano', 'Tipo de Servicio'])['Cantidad'].sum().unstack()
+
+# Crear el gráfico de líneas para cada tipo de servicio
+colors = ['blue',"grey", 'purple', 'brown', 'pink', 'cyan', 'magenta', 'black', 'teal', 'gold','coral', 'salmon', 'khaki', 'plum', 'lavender', 'lightblue']
+for i, column in enumerate(tendencia_ano_servicio.columns):
+    plt.plot(tendencia_ano_servicio.index, tendencia_ano_servicio[column], marker='o', label=column, color=colors[i % len(colors)])
+plt.title('Evolución de Servicios por Año y Tipo de Servicio')
+plt.xlabel('Año')
+plt.ylabel('Cantidad de Servicios')
+plt.legend(title='Tipo de Servicio', bbox_to_anchor=(1.05, 1), loc='upper left')
+plt.grid(True)
+plt.tight_layout()
+
+plt.tight_layout()
+plt.show()
+# Calcular la proporción de estudios realizados a usuarios con seguro
+seguro_proporcion = [df['Senasa'].sum(), df['Otros'].sum()]
+labels = ['Senasa', 'Otros']
+
+# Crear el gráfico de pastel
+plt.pie(seguro_proporcion, labels=labels, autopct='%1.1f%%', startangle=90, colors=['skyblue', 'orange'])
+plt.title('Proporción de Estudios Realizados vs Seguro')
+plt.show()
+# Agrupar por tipo de servicio y sumar las columnas de seguro
+seguro_vs_tipo = df.groupby('Tipo de Servicio')[['Senasa', 'Otros']].sum()
+
+# Crear el gráfico de barras apiladas
+seguro_vs_tipo.plot(kind='bar', stacked=True, figsize=(12, 6), color=['red', 'green'])
+plt.title('Distribución de Seguros por Tipo de Estudio')
+plt.xlabel('Tipo de Servicio')
+plt.ylabel('Cantidad')
+plt.xticks(rotation=45, ha='right')
+plt.legend(title='Seguro')
+plt.tight_layout()
+plt.show()
+# Agrupar los datos por RD y Haiti y sumar la columna 'Senasa'
+cobertura = df[(df['RD'] >= 1) & (df['Haiti'] >= 1)].groupby(['RD', 'Haiti'])[['Senasa', "Otros"]].sum().reset_index()
+
+# Create a scatter plot for RD and Haiti vs Senasa
+plt.figure(figsize=(10, 6))
+plt.scatter(cobertura['RD'], cobertura['Senasa'], label='RD senasa', color='blue', alpha=0.6)
+plt.scatter(cobertura['RD'], cobertura['Otros'], label='RD otros', color='orange', alpha=0.6)
+plt.scatter(cobertura['Haiti'], cobertura['Otros'], label='Haiti otros', color='red', alpha=0.6)
+plt.scatter(cobertura['Haiti'], cobertura['Senasa'], label='Haiti senasa', color='green', alpha=0.6)
+plt.title('Cobertura de Seguro Senasa: RD vs Haití')
+plt.xlabel('RD / Haití')
+plt.ylabel('Cantidad de Cobertura (Senasa)')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+# Agrupar los datos por RD y Haiti y sumar la columna 'Senasa'
+cobertura = df[(df['RD'] >= 1) & (df['Haiti'] >= 1)].groupby(['RD', 'Haiti'])[['Senasa', "Otros"]].sum().reset_index()
+
+# Create a scatter plot for RD and Haiti vs Senasa
+plt.figure(figsize=(10, 6))
+#plt.scatter(cobertura['RD'], cobertura['Senasa'], label='RD senasa', color='blue', alpha=0.6)
+#plt.scatter(cobertura['RD'], cobertura['Otros'], label='RD otros', color='orange', alpha=0.6)
+plt.scatter(cobertura['Haiti'], cobertura['Otros'], label='Haiti otros', color='red', alpha=0.6)
+plt.scatter(cobertura['Haiti'], cobertura['Senasa'], label='Haiti senasa', color='green', alpha=0.6)
+plt.title('Cobertura de Seguro Senasa: RD vs Haití')
+plt.xlabel('RD / Haití')
+plt.ylabel('Cantidad de Cobertura (Senasa)')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+# Agrupar los datos
+cobertura_senasa = df[(df['Masculino'] >= 1) & (df['Femenino'] >= 1)].groupby(['Masculino', 'Femenino'])[['Senasa']].sum().reset_index()
+
+
+# Create a scatter plot 
+plt.figure(figsize=(10, 6))
+plt.scatter(cobertura_senasa['Masculino'], cobertura_senasa['Senasa'], label='Masculino', color='green', alpha=0.6)
+plt.scatter(cobertura_senasa['Femenino'], cobertura_senasa['Senasa'], label='Femenino', color='red', alpha=0.6)
+plt.title('Cobertura de Seguro Senasa: Masculino vs femenino')
+plt.xlabel('Masculino / Femenino')
+plt.ylabel('Cantidad de Cobertura (Senasa)')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+mes_vs_seguro = df.groupby('Mes')[['Senasa', 'Otros']].sum()
+
+# Crear el gráfico de barras separadas para Senasa y Otros
+mes_vs_seguro.plot(kind='bar', figsize=(12, 6), color=['blue', 'orange'])
+plt.title('Distribución de Seguros por Mes')
+plt.xlabel('Mes')
+plt.ylabel('Cantidad')
+plt.xticks(rotation=0)
+plt.legend(title='Seguro')
+plt.tight_layout()
+plt.show()
+mes_vs_seguro = df[(df['Ano'] >= 2016) & (df['Ano'] <= 2022)].groupby('Ano')[['Senasa', 'Otros']].sum()
+
+# Crear el gráfico de barras separadas para Senasa y Otros
+mes_vs_seguro.plot(kind='bar', figsize=(12, 6), color=['blue', 'orange'])
+plt.title('Distribución de Seguros por Mes')
+plt.xlabel('Ano')
+plt.ylabel('Cantidad')
+plt.xticks(rotation=0)
+plt.legend(title='Seguro')
+plt.tight_layout()
+plt.show()
+
+#Tomar pendiente que ano 2015 empieza a partir del mes 6 y ano 2023 termina en el 
+# mes 7 lo que no podemos determinar si hay un aumento en las coberturas por ano al menos no utilizando esos anos como referecia
+#Please keep in mind year 2015 starts in monh 6th and year 2023 ends on month 7. 
+#this does not help us to determine if the insurances coverage is increasing or not at least not taking this years into consideration 
+# Calcular la cantidad total de estudios realizados
+total_estudios = df['Cantidad'].sum()
+
+# Calcular la cantidad total de estudios realizados por hombres y mujeres
+genero_totales = df[['Masculino', 'Femenino']].sum()
+
+# Mostrar la cantidad total de estudios
+print(f"Cantidad total de estudios realizados: {total_estudios}")
+
+# Crear el gráfico de barras
+plt.figure(figsize=(8, 6))
+plt.bar(genero_totales.index, genero_totales.values, color=['blue', 'pink'])
+plt.title('Cantidad de Estudios Realizados : 268,249')
+plt.xlabel('Género')
+plt.ylabel('Cantidad de Estudios')
+plt.show()
+# Calcular la cantidad total de estudios realizados
+total_estudios = df[['Senasa', 'Otros']].sum().sum()
+
+# Calcular la cantidad total de estudios realizados por hombres y mujeres
+genero_totales = df[['Masculino', 'Femenino']].sum()
+
+# Mostrar la cantidad total de estudios
+print(f"Estudios cubiertos: {total_estudios}")
+
+# Crear el gráfico de barras
+plt.figure(figsize=(8, 6))
+plt.bar(genero_totales.index, genero_totales.values, color=['blue', 'pink'])
+plt.title(f'Cubiertos : {total_estudios:,}')
+plt.xlabel('Género')
+plt.ylabel('Cubiertos')
+plt.show()
+# Crear un gráfico de barras para visualizar la cantidad de estudios por nacionalidad
+nacionalidad = df[['RD', 'Haiti', 'Otra nacionalidad', 'Sin datos de la nacionalidad']].sum()
+
+# Crear el gráfico de barras
+plt.figure(figsize=(10, 6))
+plt.bar(nacionalidad.index, nacionalidad.values, color=['blue', 'green', 'orange', 'red'])
+plt.title('Cantidad de Estudios por Nacionalidad')
+plt.xlabel('Nacionalidad')
+plt.ylabel('Cantidad')
+plt.xticks(rotation=45, ha='right')
+plt.tight_layout()
+plt.show()
+
+# Agrupar los datos por nacionalidad y sumar las columnas de Masculino y Femenino
+sexo_vs_nacionalidad = df.groupby(['RD', 'Haiti', 'Otra nacionalidad', 'Sin datos de la nacionalidad'])[['Masculino', 'Femenino']].sum()
+
+# Crear un gráfico de dispersión con colores asignados a cada nacionalidad
+colors = { 'Haiti': 'green', 'Otra nacionalidad': 'orange', 'Sin datos de la nacionalidad': 'red'}
+plt.figure(figsize=(12, 6))
+for nationality, color in colors.items():
+    plt.scatter(sexo_vs_nacionalidad.index.get_level_values(nationality), 
+                sexo_vs_nacionalidad['Masculino'], 
+                label=f'Masculino - {nationality}', 
+                color=color, 
+                alpha=0.6)
+    plt.scatter(sexo_vs_nacionalidad.index.get_level_values(nationality), 
+                sexo_vs_nacionalidad['Femenino'], 
+                label=f'Femenino - {nationality}', 
+                color=color, 
+                alpha=0.3)
+plt.title('Distribución de Sexo por Nacionalidad')
+plt.xlabel('Nacionalidad')
+plt.ylabel('Cantidad')
+plt.xticks(rotation=45, ha='right')
+plt.legend(title='Sexo')
+plt.tight_layout()
+plt.show()
