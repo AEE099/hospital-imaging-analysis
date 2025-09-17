@@ -3,3 +3,8 @@ matplotlib
 pandas
 numpy
 scikit-learn
+pandas
+pip
+seaborn
+plotly
+warnings
