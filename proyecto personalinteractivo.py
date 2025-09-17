@@ -27,7 +27,7 @@ df=pd.read_csv("DA-INCART-IMAGENES-JUN2015-JUN2023.csv", encoding='latin1')
         # Interfaz Streamlit: Titulos y Descripciones
 st.set_page_config(page_title="Servicios de imagenes", layout="wide")
         # Agregar un logo al Streamlit
-st.sidebar.image(r"/workspaces/hospital-imaging-analysis/logo.jpg", use_column_width=True)
+st.sidebar.image("logo.jpg", use_container_width=True)
 st.markdown('<style>div.block-container{padding-top:1rem;}</style>', unsafe_allow_html=True)
 
         #Reemplazando valores
@@ -623,3 +623,4 @@ elif menu == "🤖 Predicciones":
             st.success(f"🔢 Cantidad estimada de : {int(resultado[0])}")
         except Exception as e:
             st.error(f"❌ Error al hacer la predicción: {e}")
+
